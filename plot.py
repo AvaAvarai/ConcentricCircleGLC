@@ -98,11 +98,13 @@ def plot_concentric_circles(data: pd.DataFrame, class_column: str = 'class') -> 
     num_classes = len(unique_classes)
     colors = generate_distinct_colors(num_classes)
 
-    radii = np.linspace(1, 4, num_attributes)  # Create a circle for each attribute
+    radii = np.linspace(1, num_attributes, num_attributes)  # Create a circle for each attribute
 
     class_to_color = {cls: colors[idx] for idx, cls in enumerate(unique_classes)}
 
     fig, ax = plt.subplots(figsize=(10, 10), facecolor='lightgrey')
+
+    plt.subplots_adjust(top=0.99, bottom=0.15)
 
     def update_plot(zoom_factor=1.0, x_pan=0.0, y_pan=0.0):
         """
@@ -147,13 +149,13 @@ def plot_concentric_circles(data: pd.DataFrame, class_column: str = 'class') -> 
 
     # Set up zoom and pan sliders
     zoom_ax = plt.axes([0.2, 0.01, 0.65, 0.03], facecolor='lightgrey')
-    zoom_slider = Slider(zoom_ax, 'Zoom', 0.5, 2.0, valinit=1.0)
+    zoom_slider = Slider(zoom_ax, 'Zoom', 0.5, 10.0, valinit=1.0)
 
     hpan_ax = plt.axes([0.2, 0.05, 0.65, 0.03], facecolor='lightgrey')
-    hpan_slider = Slider(hpan_ax, 'H Pan', -5.0, 5.0, valinit=0.0)
+    hpan_slider = Slider(hpan_ax, 'H Pan', -num_attributes, num_attributes, valinit=0.0)
 
     vpan_ax = plt.axes([0.2, 0.09, 0.65, 0.03], facecolor='lightgrey')
-    vpan_slider = Slider(vpan_ax, 'V Pan', -5.0, 5.0, valinit=0.0)
+    vpan_slider = Slider(vpan_ax, 'V Pan', -num_attributes, num_attributes, valinit=0.0)
 
     zoom_slider.on_changed(lambda val: update_plot(zoom_factor=val, x_pan=hpan_slider.val, y_pan=vpan_slider.val))
     hpan_slider.on_changed(lambda val: update_plot(zoom_factor=zoom_slider.val, x_pan=val, y_pan=vpan_slider.val))
