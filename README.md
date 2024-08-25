@@ -1,8 +1,10 @@
 # ConcentricCircleGLC
 
-Experiments with a new General Line Coordinate mapping which is currently being explored utilizing Concentric Circle axes. Generalizes the concept of Parallel Coordinates mapped onto concentric circles.
+Experiments with two new General Line Coordinate mappings which is being developed on Concentric Circle and Concentric Spheres axes. Generalizes the concept of Parallel Coordinates mapped onto 2D and 3D sequenced and enclosed axes.
 
 ## Screenshots
+
+![Demo 2](cs.png)
 
 ![Demo 1](cc-full.png)
 
