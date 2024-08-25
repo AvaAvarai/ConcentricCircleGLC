@@ -5,24 +5,42 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.widgets import Slider
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import colorsys
+from typing import List, Tuple, Optional
 
-def load_csv():
+def load_csv() -> Optional[pd.DataFrame]:
+    """
+    Prompts the user to select a CSV file and loads it into a pandas DataFrame.
+    Returns None if loading fails or no file is selected.
+    """
     root = tk.Tk()
-    root.withdraw()  # Hide the main tkinter window
+    root.withdraw()
 
-    # Ask the user to select a CSV file
     file_path = filedialog.askopenfilename(title="Select CSV File", filetypes=[("CSV files", "*.csv")])
     if not file_path:
         messagebox.showerror("Error", "No file selected!")
         return None
 
-    # Load the CSV file
     try:
         data = pd.read_csv(file_path)
         return data
     except Exception as e:
         messagebox.showerror("Error", f"Failed to load the CSV file: {str(e)}")
         return None
+
+def generate_distinct_colors(num_classes: int) -> List[Tuple[float, float, float]]:
+    """
+    Generates a list of distinct RGB colors by subdividing the HSV hue space.
+    
+    Args:
+        num_classes (int): The number of distinct colors to generate.
+    
+    Returns:
+        List[Tuple[float, float, float]]: A list of RGB color tuples.
+    """
+    hues = np.linspace(0, 1, num_classes, endpoint=False)
+    colors = [colorsys.hsv_to_rgb(h, 0.7, 0.9) for h in hues]
+    return colors
 
 def plot_3d_spheres(data, class_column='class'):
     # Ensure the class column is treated in a case-insensitive manner
@@ -42,10 +60,14 @@ def plot_3d_spheres(data, class_column='class'):
     # Determine the number of attributes and classes
     num_attributes = len(features.columns)
     unique_classes = classes.unique()
-    colors = plt.cm.get_cmap('tab10', len(unique_classes))
+    num_classes = len(unique_classes)
+    colors = generate_distinct_colors(num_classes)
 
-    # Setup radii for expanding spheres
-    radii = np.linspace(1, 4, num_attributes)
+    # Map classes to colors
+    class_to_color = {cls: colors[idx] for idx, cls in enumerate(unique_classes)}
+
+    # Setup radii for expanding spheres with a slower gradient
+    radii = np.linspace(1, num_attributes, num_attributes)  # Adjusted range for slower gradient
 
     # Create a 3D plot
     fig = plt.figure(figsize=(10, 10))
@@ -63,18 +85,18 @@ def plot_3d_spheres(data, class_column='class'):
             points.append((x, y, z))
 
         points = np.array(points)
-        class_index = np.where(unique_classes == classes.iloc[i])[0][0]
-        ax.plot(points[:, 0], points[:, 1], points[:, 2], color=colors(class_index), alpha=0.3)
-        ax.scatter(points[:, 0], points[:, 1], points[:, 2], color=colors(class_index), alpha=0.6)
+        color = class_to_color[classes.iloc[i]]
+        ax.plot(points[:, 0], points[:, 1], points[:, 2], color=color, alpha=0.3)
+        ax.scatter(points[:, 0], points[:, 1], points[:, 2], color=color, alpha=0.6)
 
-    # Plot transparent spheres for visual reference
+    # Plot lighter, more transparent spheres for visual reference
     for radius in radii:
         u = np.linspace(0, 2 * np.pi, 100)
         v = np.linspace(0, np.pi, 100)
         x = radius * np.outer(np.cos(u), np.sin(v))
         y = radius * np.outer(np.sin(u), np.sin(v))
         z = radius * np.outer(np.ones(np.size(u)), np.cos(v))
-        ax.plot_surface(x, y, z, color='lightgrey', alpha=0.1, zorder=-1)
+        ax.plot_surface(x, y, z, color='lightgrey', alpha=0.05, zorder=-1)  # Increased transparency
 
     # Add labels for each attribute on the spheres
     for j, radius in enumerate(radii):
@@ -94,6 +116,10 @@ def plot_3d_spheres(data, class_column='class'):
 
     rot_x_slider.on_changed(update)
     rot_y_slider.on_changed(update)
+
+    # Add a legend
+    legend_elements = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=class_to_color[cls], markersize=10, label=cls) for cls in unique_classes]
+    ax.legend(handles=legend_elements, loc='upper right', title="Classes")
 
     plt.title("3D Expanding Spheres Plot", pad=20)
     plt.show()
