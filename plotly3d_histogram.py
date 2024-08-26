@@ -57,18 +57,22 @@ def distribute_points_on_sphere(n: int) -> np.ndarray:
     x, y, z = np.cos(theta) * np.sin(phi), np.sin(theta) * np.sin(phi), np.cos(phi)
     return np.vstack([x, y, z]).T
 
-def compute_class_distribution_histogram(class_counts: Dict[str, int], total: int) -> str:
+def compute_class_distribution_histogram(class_counts: Dict[str, int], total: int, class_totals: Dict[str, int]) -> str:
     """
     Computes the class distribution relative to the total count at a point and returns it as a string.
     
     Args:
         class_counts (Dict[str, int]): Dictionary with class counts at the point.
         total (int): Total number of cases passing through the point.
+        class_totals (Dict[str, int]): Total count for each class.
     
     Returns:
         str: The class distribution histogram represented as a string.
     """
-    histogram = '\n'.join([f'{cls}: {count} ({count / total:.2%})' for cls, count in class_counts.items()])
+    histogram = '\n'.join(
+        [f'{cls}: {count} ({count / total:.2%} of point, {count / class_totals[cls]:.2%} of class)' 
+         for cls, count in class_counts.items()]
+    )
     return f'Class Distribution:\n{histogram}'
 
 def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=100) -> None:
@@ -84,7 +88,7 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
     class_column = class_column.lower()
     if class_column not in data.columns:
         raise ValueError(f"Column '{class_column}' not found in the CSV file.")
-    
+
     features = data.drop(columns=[class_column])
     classes = data[class_column]
 
@@ -105,6 +109,7 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
 
     # Track the points and the number of cases passing through each lattice point
     point_class_distribution = {}
+    class_totals = classes.value_counts().to_dict()
 
     # Group by class and create one trace per class
     for cls in unique_classes:
@@ -136,7 +141,7 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
         # Compute hover text for each point
         for point in zip(x_points, y_points, z_points):
             total_cases = sum(point_class_distribution[point].values())
-            histogram = compute_class_distribution_histogram(point_class_distribution[point], total_cases)
+            histogram = compute_class_distribution_histogram(point_class_distribution[point], total_cases, class_totals)
             hover_texts.append(histogram)
 
         scatter_data.append(go.Scatter3d(
