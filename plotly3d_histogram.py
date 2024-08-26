@@ -154,6 +154,26 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
             name=f'Class {cls}'
         ))
 
+    # Plot reference spheres (optional, for visual reference)
+    sphere_traces = []
+    for radius in radii:
+        u = np.linspace(0, 2 * np.pi, 50)
+        v = np.linspace(0, np.pi, 50)
+        x = radius * np.outer(np.cos(u), np.sin(v))
+        y = radius * np.outer(np.sin(u), np.sin(v))
+        z = radius * np.outer(np.ones(np.size(u)), np.cos(v))
+
+        sphere_traces.append(go.Surface(
+            x=x, y=y, z=z,
+            opacity=0.05,
+            showscale=False,
+            colorscale=[[0, 'lightgrey'], [1, 'lightgrey']],
+            hoverinfo='skip',
+            visible=True  # Default visibility
+        ))
+
+    scatter_data.extend(sphere_traces)
+
     # Create the layout for the 3D plot
     layout = go.Layout(
         title="3D Expanding Spheres Plot with Class Distribution on Hover",
@@ -165,7 +185,29 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
         ),
         legend=dict(x=0.7, y=0.9),
         margin=dict(l=0, r=0, b=0, t=40),
-        hovermode='closest'  # Ensure hover is focused on the closest point
+        hovermode='closest',  # Ensure hover is focused on the closest point
+        updatemenus=[
+            {
+                "buttons": [
+                    {
+                        "label": "Toggle Spheres",
+                        "method": "update",
+                        "args": [{"visible": [True] * len(scatter_data[:-len(sphere_traces)]) + [False] * len(sphere_traces)},
+                                 {"title": "Spheres Off"}],
+                        "args2": [{"visible": [True] * len(scatter_data)},
+                                  {"title": "Spheres On"}]
+                    }
+                ],
+                "direction": "left",
+                "pad": {"r": 10, "t": 10},
+                "showactive": True,
+                "type": "buttons",
+                "x": 0.1,
+                "xanchor": "left",
+                "y": 0.05,
+                "yanchor": "bottom"
+            }
+        ]
     )
 
     # Create the figure and display it
