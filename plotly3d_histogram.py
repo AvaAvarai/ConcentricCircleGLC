@@ -154,8 +154,40 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
             name=f'Class {cls}'
         ))
 
+    # Track non-pure points for flashing
+    non_pure_points = []
+    for point, distribution in point_class_distribution.items():
+        if len(distribution) > 1:  # More than one class at this point
+            non_pure_points.append(point)
+
+    # Flashing effect for non-pure points
+    frames = []
+    for i in range(2):  # Two frames to toggle visibility
+        frame_data = []
+        for trace in scatter_data:
+            if trace.name.startswith('Class'):
+                new_colors = []
+                for x, y, z in zip(trace.x, trace.y, trace.z):
+                    if i % 2 == 0 and (x, y, z) in non_pure_points:
+                        new_colors.append('yellow')  # Highlight non-pure points
+                    else:
+                        new_colors.append(trace.marker.color)
+                
+                frame_data.append(go.Scatter3d(
+                    x=trace.x, y=trace.y, z=trace.z,
+                    mode='markers+lines',
+                    marker=dict(size=trace.marker.size, color=new_colors, opacity=trace.marker.opacity),
+                    line=dict(color=trace.line.color, width=trace.line.width),
+                    text=trace.text,
+                    hoverinfo=trace.hoverinfo,
+                    name=trace.name
+                ))
+        frames.append(go.Frame(data=frame_data))
+
     # Plot reference spheres (optional, for visual reference)
     sphere_traces = []
+    sphere_opacity = 0.05  # Default opacity for spheres
+
     for radius in radii:
         u = np.linspace(0, 2 * np.pi, 50)
         v = np.linspace(0, np.pi, 50)
@@ -165,10 +197,10 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
 
         sphere_traces.append(go.Surface(
             x=x, y=y, z=z,
-            opacity=0.05,
+            opacity=sphere_opacity,  # Use the default opacity
             showscale=False,
             colorscale=[[0, 'lightgrey'], [1, 'lightgrey']],
-            hoverinfo='skip',
+            hoverinfo='skip',  # Disable hover when spheres are toggled off
             visible=True  # Default visibility
         ))
 
@@ -192,10 +224,20 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
                     {
                         "label": "Toggle Spheres",
                         "method": "update",
-                        "args": [{"visible": [True] * len(scatter_data[:-len(sphere_traces)]) + [False] * len(sphere_traces)},
-                                 {"title": "Spheres Off"}],
-                        "args2": [{"visible": [True] * len(scatter_data)},
-                                  {"title": "Spheres On"}]
+                        "args": [
+                            {"visible": [False if trace in sphere_traces else True for trace in scatter_data]},
+                            {"title": "Spheres Off"}
+                        ],
+                        "args2": [
+                            {"visible": [True] * len(scatter_data)},
+                            {"title": "Spheres On"}
+                        ]
+                    },
+                    {
+                        "args": [None, {"frame": {"duration": 500, "redraw": True},
+                                        "fromcurrent": True, "mode": "immediate"}],
+                        "label": "Flash Non-Pure Points",
+                        "method": "animate"
                     }
                 ],
                 "direction": "left",
@@ -211,7 +253,7 @@ def plot_3d_spheres(data: pd.DataFrame, class_column: str = 'class', grid_size=1
     )
 
     # Create the figure and display it
-    fig = go.Figure(data=scatter_data, layout=layout)
+    fig = go.Figure(data=scatter_data, layout=layout, frames=frames)
     fig.show()
 
 if __name__ == "__main__":
