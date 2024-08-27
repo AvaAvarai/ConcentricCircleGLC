@@ -4,6 +4,24 @@ Experiments with two new General Line Coordinate mappings which is being develop
 
 ## Screenshots
 
+![demo](plotly_screenshots/iris.png)
+
+![demo](plotly_screenshots/iris_node.png)
+
+![demo](plotly_screenshots/newplot(1).png)
+
+![demo](plotly_screenshots/newplot(2).png)
+
+![demo](plotly_screenshots/newplot(3).png)
+
+![demo](plotly_screenshots/newplot(4).png)
+
+![demo](plotly_screenshots/newplot(5).png)
+
+![demo](plotly_screenshots/2d_musk.png)
+
+![demo](plotly_screenshots/3d_musk.png)
+
 ![Demo 2](cs.png)
 
 ![Demo 1](cc-full.png)
